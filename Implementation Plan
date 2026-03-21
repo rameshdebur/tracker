@@ -1,0 +1,616 @@
+# HumTrack — Revised Comprehensive Implementation Plan
+
+**Product**: HumTrack — Scientific multi-camera marker-based motion analysis and gait analysis platform  
+**Stack**: C# 12 / .NET 8 LTS / AvaloniaUI 11 / EmguCV / SkiaSharp / MathNet.Numerics  
+**Classification**: CDSCO Class A / IEC 62304 Class A  
+**Date**: 2026-03-09  
+**Version**: 1.1
+
+---
+
+## Core Engineering Principles
+
+> [!IMPORTANT]
+> The following principles are non-negotiable and must be enforced at every commit.
+
+| Principle | Implementation |
+|-----------|---------------|
+| **Scientific accuracy first** | Calibration and derivative computations must be numerically verifiable. No simplifications that compromise physical accuracy. |
+| **Determinism** | Identical inputs must always produce byte-identical outputs. Verified by CI on every PR. |
+| **Living documentation** | All docs (SRS, SDD, Traceability) are updated in the same PR as the code change that triggers them. CI blocks merges with stale docs. |
+| **UI = Product** | The UI is not decoration. Every scientific operation must have a clear, premium visual workflow. Functionality and UI are designed together. |
+| **Code quality** | Zero compiler warnings at all times. Full XML docstrings on all public members in `Core` and `Biomechanics`. Analysers: `Microsoft.CodeAnalysis.NetAnalyzers` + `SonarAnalyzer.CSharp`. |
+
+---
+
+## 1. Updated Product Vision
+
+HumTrack provides:
+- **Precision scientific measurement** from single or multi-camera video using world-calibrated coordinates
+- **Auto-tracking** of 1–n markers using pluggable algorithms (Optical Flow, KCF, CSRT, Blob, Hybrid)
+- **Full gait and movement analysis** pipeline with clinical-grade kinematic outputs
+- **Multi-camera 3D reconstruction** for complete spatial motion capture
+- **Live capture** from connected cameras with real-time marker tracking
+- **Simulation-ready export** to industry formats (.c3d, OpenSim) for downstream biomechanical simulation
+- An **extraordinary, memorable user interface** that makes complex scientific operations feel intuitive
+
+---
+
+## 2. Tech Stack (Revised)
+
+| Layer | Technology | Rationale |
+|-------|-----------|-----------|
+| Language | C# 12 / .NET 8 LTS | Performance, type safety, AOT compilation |
+| UI Framework | AvaloniaUI 11 (MIT) | Cross-platform, SkiaSharp, actively maintained |
+| 2D/Video Rendering | SkiaSharp | GPU-accelerated custom drawing for overlays, animations |
+| Computer Vision | EmguCV 4.9+ (OpenCV) | All tracking engines, calibration, undistortion |
+| Camera Calibration | EmguCV `CalibrateCamera` & `StereoCalibrate` | Brown-Conrady model, stereo epipolar geometry |
+| Video Decoding | FFMediaToolkit (FFmpeg wrapper) | Frame-exact decoding, all major formats |
+| Live Capture | EmguCV `VideoCapture` | USB, GigE, IP cameras |
+| Math / Numerics | MathNet.Numerics | Deterministic linear algebra, curve fitting, FFT |
+| Plotting | OxyPlot.Avalonia | Interactive X-Y plots, synchronized axes |
+| State Management | CommunityToolkit.Mvvm | MVVM, observable properties, relay commands |
+| DI | Microsoft.Extensions.DependencyInjection | Service lifetimes, testability |
+| Testing | xUnit + FluentAssertions + Verify | Unit, integration, snapshot, determinism |
+| Static Analysis | SonarAnalyzer.CSharp + NetAnalyzers | Enforced as CI gate |
+| CI/CD | GitHub Actions | Auto-build, test, publish on all platforms |
+| Packaging | MSIX (Win) / DMG (macOS) / AppImage (Linux) | Native signed installers |
+| Biomechanics Export | ezc3d / custom C3D writer | Industry-standard simulation export |
+| Documentation | Docfx | API documentation site generated from XML comments |
+
+---
+
+## 3. Architecture — Full Project Structure
+
+```
+HumTrack/
+├── src/
+│   │
+│   ├── HumTrack.Biomechanics/          # Simulation-ready data library (no UI, no CV deps)
+│   │   ├── Models/
+│   │   │   ├── Point3D.cs              # 3D spatial coordinate, Z=0 for monocular
+│   │   │   ├── MarkerDefinition.cs     # Marker ID, label, expected color/size
+│   │   │   ├── MarkerSet.cs            # Named collection (e.g. Helen Hayes marker set)
+│   │   │   ├── RigidSegment.cs         # Bone/segment defined by two markers
+│   │   │   ├── JointAngle.cs           # Joint = 3 markers or 2 segments
+│   │   │   └── GaitCycle.cs            # One complete stride cycle
+│   │   ├── Kinematics/
+│   │   │   ├── SegmentKinematics.cs    # Euler angles, segment velocity
+│   │   │   └── JointKinematicsEngine.cs
+│   │   └── Export/
+│   │       ├── C3dExporter.cs          # .c3d format (AMTI-compatible)
+│   │       └── OpenSimExporter.cs      # OpenSim .trc / .mot format
+│   │
+│   ├── HumTrack.Core/                  # Core engine — zero UI/CV dependencies where possible
+│   │   ├── Tracking/
+│   │   │   ├── ITrackingEngine.cs      # Strategy pattern interface
+│   │   │   ├── TrackingResult.cs
+│   │   │   ├── TrackingCapabilities.cs
+│   │   │   ├── EngineSettings.cs
+│   │   │   ├── TrackingEngineRegistry.cs
+│   │   │   └── Engines/
+│   │   │       ├── TemplateMatchingEngine.cs
+│   │   │       ├── OpticalFlowEngine.cs       # Main multi-point engine
+│   │   │       ├── KcfEngine.cs
+│   │   │       ├── CsrtEngine.cs
+│   │   │       ├── BlobDetectionEngine.cs
+│   │   │       └── HybridEngine.cs            # Blob detect + LK flow + re-detect
+│   │   ├── Calibration/                        # CRITICAL — Scientific accuracy
+│   │   │   ├── ICameraCalibrator.cs
+│   │   │   ├── IntrinsicCalibration.cs         # fx, fy, cx, cy, distortion coeffs
+│   │   │   ├── LensDistortionModel.cs          # Brown-Conrady (k1..k6, p1, p2, s1..s4)
+│   │   │   ├── LensProfile.cs                  # Named profiles (GoPro, phone, fisheye, etc.)
+│   │   │   ├── LensProfileLibrary.cs           # Built-in + user-saved lens profiles
+│   │   │   ├── CheckerboardCalibrator.cs       # OpenCV chessboard calibration
+│   │   │   ├── CharucoCalibrator.cs            # ChArUco board (more robust than chessboard)
+│   │   │   ├── WorldCalibration.cs             # Scale + origin + angle in world units
+│   │   │   ├── CalibrationStick.cs             # User-defined known-length reference
+│   │   │   ├── CalibrationPoints.cs            # 2+ known world positions
+│   │   │   ├── CircleFitter.cs                 # Circle-based calibration
+│   │   │   ├── CoordinateSystem.cs             # Image → world transform per frame
+│   │   │   └── CalibrationValidator.cs         # Re-projection error, RMS reporting
+│   │   ├── MultiCamera/
+│   │   │   ├── CameraRig.cs                    # Collection of synchronized cameras
+│   │   │   ├── StereoCalibration.cs            # Stereo extrinsics, R, T, E, F matrices
+│   │   │   ├── MultiViewCalibration.cs         # N-camera calibration via bundle adjustment
+│   │   │   ├── Triangulator.cs                 # 2D → 3D DLT / optimal triangulation
+│   │   │   ├── EpipolarGeometry.cs             # Epipolar lines, rectification
+│   │   │   └── CameraSyncronizer.cs            # Frame sync across cameras
+│   │   ├── Capture/
+│   │   │   ├── ICaptureSource.cs               # Common interface for live/file sources
+│   │   │   ├── VideoCaptureSource.cs           # Live camera via EmguCV VideoCapture
+│   │   │   ├── FileVideoSource.cs              # Pre-recorded via FFMediaToolkit
+│   │   │   ├── ImageSequenceSource.cs
+│   │   │   ├── CaptureSettings.cs              # Resolution, FPS, codec, buffer settings
+│   │   │   └── MultiCaptureSession.cs          # Synchronized multi-camera live capture
+│   │   ├── Models/
+│   │   │   ├── Track.cs
+│   │   │   ├── PointMassTrack.cs
+│   │   │   ├── Step.cs                          # Position (3D), timestamp, confidence
+│   │   │   ├── Project.cs                       # Root object (cameras, tracks, calibrations)
+│   │   │   └── CameraMetadata.cs               # Camera ID, intrinsics, extrinsics
+│   │   ├── Physics/
+│   │   │   ├── DerivativeEngine.cs             # Velocity, acceleration from positions
+│   │   │   ├── DerivativeAlgorithm.cs          # Finite diff / Savitzky-Golay / bounce
+│   │   │   ├── CenterOfMass.cs
+│   │   │   ├── GaitParameters.cs               # Stride, cadence, swing/stance
+│   │   │   └── GaitEventDetector.cs            # Heel strike, toe-off
+│   │   └── IO/
+│   │       ├── ProjectSerializer.cs            # JSON project save/load (.humtrk)
+│   │       ├── LegacyTrkImporter.cs            # Java Tracker .trk import
+│   │       └── DataExporter.cs                 # CSV, TSV, clipboard
+│   │
+│   ├── HumTrack.App/                           # AvaloniaUI application
+│   │   ├── Design/
+│   │   │   ├── Tokens.axaml                    # Design tokens (colors, spacing, radius)
+│   │   │   ├── Typography.axaml                # Font definitions
+│   │   │   ├── Animations.axaml                # Shared easing curves and transitions
+│   │   │   └── Icons/                          # SVG icon library
+│   │   ├── ViewModels/
+│   │   │   ├── MainWindowViewModel.cs
+│   │   │   ├── CalibrationWizardViewModel.cs   # Multi-step calibration workflow
+│   │   │   ├── LensProfileViewModel.cs
+│   │   │   ├── MultiCameraViewModel.cs
+│   │   │   ├── CaptureViewModel.cs
+│   │   │   ├── VideoPlayerViewModel.cs
+│   │   │   ├── TrackManagerViewModel.cs
+│   │   │   └── PlotViewModel.cs
+│   │   ├── Views/
+│   │   │   ├── MainWindow.axaml
+│   │   │   ├── Calibration/
+│   │   │   │   ├── CalibrationWizard.axaml      # Step-by-step guided calibration UI
+│   │   │   │   ├── LensProfileSelector.axaml    # Visual lens profile browser
+│   │   │   │   └── ReprojectionErrorView.axaml  # Show calibration quality visually
+│   │   │   ├── MultiCamera/
+│   │   │   │   ├── CameraRigView.axaml          # Camera rig layout visualizer
+│   │   │   │   └── StereoView.axaml             # Side-by-side synchronized views
+│   │   │   ├── Capture/
+│   │   │   │   └── LiveCapturePanel.axaml
+│   │   │   ├── VideoCanvas.axaml                # Primary SkiaSharp video + overlay canvas
+│   │   │   ├── TrackPanel.axaml
+│   │   │   └── PlotPanel.axaml
+│   │   ├── Controls/
+│   │   │   ├── VideoOverlayControl.cs           # Core SkiaSharp canvas with draw layers
+│   │   │   ├── MarkerOverlay.cs
+│   │   │   ├── CalibrationOverlay.cs            # Draw calibration shapes, grids, axes
+│   │   │   ├── EpipolarLineOverlay.cs           # Multi-camera epipolar visualization
+│   │   │   └── GlassPanel.cs                    # Reusable frosted glass card component
+│   │   └── Services/
+│   │       ├── DialogService.cs
+│   │       ├── FileService.cs
+│   │       └── ThemeService.cs
+│   │
+│   └── HumTrack.Filters/                        # Video filter pipeline
+│       ├── IVideoFilter.cs
+│       ├── FilterPipeline.cs
+│       ├── BrightnessContrastFilter.cs
+│       ├── GrayscaleFilter.cs
+│       ├── GhostFilter.cs
+│       └── PerspectiveFilter.cs
+│
+├── tests/
+│   ├── HumTrack.Core.Tests/
+│   │   ├── Tracking/
+│   │   │   ├── DeterminismTests.cs              # Golden-baseline byte-exact comparison
+│   │   │   └── TrackingEngineTests.cs
+│   │   ├── Calibration/
+│   │   │   ├── LensDistortionTests.cs           # Verify undistortion math
+│   │   │   ├── WorldCalibrationTests.cs         # Verify world-unit accuracy
+│   │   │   └── TriangulationTests.cs            # Multi-camera 3D accuracy
+│   │   └── Physics/
+│   │       ├── DerivativeEngineTests.cs
+│   │       └── GaitParametersTests.cs
+│   └── HumTrack.Integration.Tests/
+│       └── EndToEndTests.cs
+│
+├── docs/
+│   ├── SOFTWARE_REQUIREMENTS.md                 # SRS — IEC 62304 §5.2 (must stay in sync)
+│   ├── SOFTWARE_DESIGN.md                       # SDD — IEC 62304 §5.3 (must stay in sync)
+│   ├── RISK_ANALYSIS.md                         # ISO 14971 / IEC 62304 §7
+│   ├── VERIFICATION_PLAN.md                     # IEC 62304 §5.5
+│   ├── TRACEABILITY_MATRIX.md                   # Req → Code → Test (auto-checked in CI)
+│   ├── CHANGE_LOG.md                            # Every PR appends here
+│   ├── CALIBRATION_GUIDE.md                     # Scientific calibration procedures
+│   └── releases/
+│       └── v1.0.0/                              # Archived compliance docs per release
+│
+├── .github/
+│   ├── workflows/
+│   │   ├── ci.yml
+│   │   ├── release.yml
+│   │   ├── determinism-check.yml
+│   │   └── doc-staleness-check.yml              # Fail if TRACEABILITY_MATRIX out of date
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   └── ISSUE_TEMPLATE/
+│       ├── bug_report.md
+│       ├── feature_request.md
+│       └── requirement_change.md
+│
+├── HumTrack.sln
+├── Directory.Build.props                         # Shared analyzer, warning-as-error rules
+├── .editorconfig                                 # Consistent formatting
+├── README.md
+└── LICENSE
+```
+
+---
+
+## 4. Calibration Architecture — Zero Compromise
+
+> [!IMPORTANT]
+> Calibration quality determines the scientific validity of all outputs. This is non-negotiable and warrants its own dedicated phase.
+
+### 4.1 Calibration Layers (must be performed in order)
+
+```
+Layer 1: Lens Intrinsic Calibration
+  └── Remove distortion introduced by the physical lens
+
+Layer 2: World Calibration
+  └── Map from corrected pixel space to real-world units (m / cm)
+
+Layer 3: Multi-Camera Extrinsic Calibration
+  └── Determine spatial relationship between cameras (stereo/multi)
+  
+Layer 4: Reference Frame Definition
+  └── Define world origin, X/Y/Z axes in physical space
+```
+
+### 4.2 Lens Distortion Model: Brown-Conrady
+
+```
+The full Brown-Conrady model (as used by OpenCV):
+  x'' = x'(1 + k1r² + k2r⁴ + k3r⁶) / (1 + k4r² + k5r⁴ + k6r⁶)
+       + 2p1x'y' + p2(r² + 2x'²) + s1r² + s2r⁴
+  y'' = y'(1 + k1r² + k2r⁴ + k3r⁶) / (1 + k4r² + k5r⁴ + k6r⁶)
+       + p1(r² + 2y'²) + 2p2x'y' + s3r² + s4r⁴
+```
+
+| Coefficient | Type | Description |
+|-------------|------|-------------|
+| k1, k2, k3 | Radial | Primary barrel/pincushion distortion |
+| k4, k5, k6 | Radial | Rational model (fisheye cameras) |
+| p1, p2 | Tangential | Off-center lens (decentering) |
+| s1–s4 | Thin prism | Sensor tilt correction |
+
+### 4.3 Calibration Methods Supported
+
+| Method | Pattern Used | Accuracy | When to Use |
+|--------|-------------|----------|-------------|
+| **ChArUco Board** (recommended) | ArUco + Chessboard hybrid | Highest | Lab setup, first-time calibration |
+| **Chessboard (OpenCV)** | Classic checkerboard | High | Standard lab cameras |
+| **Known-length stick** | User-drawn line | Good | Post-hoc world scale only |
+| **Known world points** | 2+ marked GPS/physical points | Good | Outdoor / field use |
+| **Built-in Lens Profile** | Library (GoPro, iPhone, etc.) | Moderate | Quick setup |
+
+### 4.4 Calibration Quality Reporting
+After any calibration step, the app must show:
+- **RMS Re-projection Error** (target: < 0.5 pixels for lab, < 1.5 pixels for field)
+- **Visual re-projection overlay** — draw detected pattern points vs re-projected points on video
+- **Distortion map visualization** — heat-map showing per-pixel distortion magnitude
+- **Explicit user confirmation** required before calibration is "accepted"
+
+---
+
+## 5. UI Design System
+
+> [!IMPORTANT]
+> The UI is a make-or-break element. It must be extraordinary. Scientific precision and elegant design must coexist.
+
+### 5.1 Design Direction: **Precision Dark — Scientific Noir**
+
+HumTrack's visual language is inspired by high-precision scientific instruments: electron microscopes, oscilloscopes, professional motion capture suites. It communicates trustworthiness and exactness.
+
+- **Palette**: Deep near-black background (`#0A0D12`), cool blue-grey surfaces (`#151B24`), electric cyan accent (`#00D4FF`) for interactive elements, amber (`#FFB340`) for warnings/calibration states, emerald (`#00E878`) for confirmed/tracked states
+- **Typography**: `DM Mono` for all numeric/data readouts (monospaced, clinical). `Neue Montreal` (or `Syne`) for UI labels and headings — geometric, modern, authoritative
+- **Layout**: Dense but breathable. Side panel + main canvas + bottom strip. No wasted space
+- **Overlays**: All video annotations use semi-transparent SkiaSharp layers — glowing marker rings, animated search boxes, trajectory trails with fade
+- **Motion**: Frame transitions use a 120ms ease-out. Track selections pulse with a ring animation on the canvas. The calibration wizard uses step-in slides
+- **Panels**: Frosted glass (`GlassPanel` control) with subtle border-glow — `backdrop-filter` equivalent via SkiaSharp blur + semi-transparent fill
+
+### 5.2 Design Tokens (in `Tokens.axaml`)
+
+```xml
+<!-- Backgrounds -->
+<Color x:Key="Base">#0A0D12</Color>
+<Color x:Key="Surface">#151B24</Color>
+<Color x:Key="SurfaceElevated">#1E2736</Color>
+<Color x:Key="Border">#2A3548</Color>
+
+<!-- Accents -->
+<Color x:Key="AccentCyan">#00D4FF</Color>
+<Color x:Key="AccentAmber">#FFB340</Color>
+<Color x:Key="AccentGreen">#00E878</Color>
+<Color x:Key="AccentRed">#FF4B6A</Color>
+
+<!-- Text -->
+<Color x:Key="TextPrimary">#E8EDF5</Color>
+<Color x:Key="TextSecondary">#7A8BA3</Color>
+<Color x:Key="TextMuted">#4A5A70</Color>
+```
+
+### 5.3 UI-Functionality Mapping (Critical)
+
+| Scientific Operation | UI Expression |
+|---------------------|---------------|
+| Calibration not done | Amber warning strip across top of canvas: "⚠ Calibration Required — data in pixels" |
+| Calibration in progress | Animated step wizard takes over full width with progress indicators |
+| Calibration accepted | Subtle green checkmark on camera icon, canvas shows world grid overlay |
+| Marker tracked, high confidence | Glowing cyan ring with small confidence bar arc |
+| Marker tracked, low confidence | Amber ring, pulsing animation |
+| Marker lost | Red 'X' at last known position, search box flashes |
+| Multi-camera active | Camera count badge on the cursor canvas icon |
+| Live capture active | Red REC dot in top-right corner of affected camera feeds |
+| Data exported | Toast notification bottom-right, fade out in 3s |
+
+---
+
+## 6. Revised Phased Roadmap
+
+### Phase 1: Foundation & MVP (Weeks 1–5)
+
+> **Goal**: Load video, render on canvas, manually mark points, view data.
+
+| Week | Feature | Notes |
+|------|---------|-------|
+| 1 | Project scaffold + CI | Solution, GitHub Actions, `.editorconfig`, `Directory.Build.props` |
+| 1 | Design system | `Tokens.axaml`, `Typography.axaml`, fonts, `GlassPanel` control |
+| 2 | `ICaptureSource` + `FileVideoSource` | FFmpeg-based, frame-exact |
+| 2 | `VideoOverlayControl` | SkiaSharp canvas: layered draw system (video → markers → annotations) |
+| 3 | Video player controls | Play, pause, step ±1, seek bar, frame counter, speed control |
+| 3 | `PointMassTrack` + 3D `Step` | 3D-ready data model (Z=0 for monocular) |
+| 4 | Manual marking | Click to mark; auto-advance; Shift to stay |
+| 4 | Toolbar + Track Panel | Create/delete/select tracks, mass, color picker, visible toggle |
+| 5 | MVP Data view | DataGrid table + basic OxyPlot (x vs t, y vs t) |
+
+**SRS Updated**: REQ-TRK-001, REQ-TRK-002  
+**SDD Updated**: Capture architecture, Canvas architecture  
+**Risk Updated**: RSK-001 (determinism), RSK-003 (frame dropping)
+
+---
+
+### Phase 2: Scientific Calibration (Weeks 6–10)
+
+> **Goal**: World-accurate data. Zero compromise.
+
+| Week | Feature | Notes |
+|------|---------|-------|
+| 6 | `LensDistortionModel` (Brown-Conrady) | Full k1–k6, p1–p2, s1–s4 |
+| 6 | `LensProfileLibrary` | Built-in profiles: GoPro Hero series, iPhone, generic 60mm, fisheye |
+| 7 | `CheckerboardCalibrator` | OpenCV's `CalibrateCamera` wrapped with progress reporting |
+| 7 | `CharucoCalibrator` | More robust, partial board visible is OK |
+| 8 | `CalibrationWizardViewModel` + UI | Guided step-by-step wizard: Select method → Collect frames → Compute → Review |
+| 8 | `ReprojectionErrorView` | Visual diff: detected corners vs re-projected corners |
+| 9 | `WorldCalibration` | Scale, origin, angle. Stick/points/circle methods |
+| 9 | `CalibrationValidator` | RMS report + pass/fail gate, explicit user confirmation |
+| 10 | Calibration overlay on canvas | World grid overlay, axis labels, scale bar |
+| 10 | `CoordinateSystem` transform | Per-frame image → world transform applied to all track data |
+
+**SRS Updated**: REQ-CAL-001 through REQ-CAL-010  
+**Documentation**: `docs/CALIBRATION_GUIDE.md` must be complete by end of Phase 2
+
+---
+
+### Phase 3: Tracking Engines (Weeks 11–16)
+
+> **Goal**: Pluggable auto-tracking on calibrated video — 15 markers at >100 FPS.
+
+| Week | Feature | Notes |
+|------|---------|-------|
+| 11 | `ITrackingEngine` interface + Registry | Strategy pattern; engine dropdown per-track |
+| 11 | `TemplateMatchingEngine` | NCC; legacy compat |
+| 12 | `OpticalFlowEngine` | LK pyramidal; all markers one call |
+| 12 | `KcfEngine` + `CsrtEngine` | Per-marker via EmguCV trackers |
+| 13 | `BlobDetectionEngine` | HSV → contours → Hungarian ID association |
+| 13 | `HybridEngine` | Blob detect + LK flow + re-detect every N frames |
+| 14 | `MotionPredictor` | v/a-based search region prediction |
+| 14 | AutoTracker wizard UI | Key frame, search area, evolve rate, "Track All" |
+| 15 | Engine benchmark test suite | Reference video, all engines, FPS + accuracy vs ground truth |
+| 16 | Per-track engine selection in UI | Dropdown in Track Panel; live engine swap |
+
+---
+
+### Phase 4: Physics & Gait Analysis (Weeks 17–21)
+
+> **Goal**: Clinical-grade kinematic outputs.
+
+| Week | Feature | Notes |
+|------|---------|-------|
+| 17 | `DerivativeEngine` | Finite diff, Savitzky-Golay smoothing, bounce-aware |
+| 17 | `CenterOfMass` track | Aggregate from point masses |
+| 18 | Vector + Vector Sum tracks | v, a arrows overlaid on canvas |
+| 18 | Reference frame switching | Relative to any track or CoM |
+| 19 | `GaitParameters` engine | Stride length, cadence, step width, symmetry index |
+| 19 | `GaitEventDetector` | Heel strike, toe-off from vertical velocity signature |
+| 20 | Rigid Segments + Joint Angles | Define bone linkages; compute Euler angles |
+| 20 | Data Builder | Custom columns with expression parser |
+| 21 | Enhanced Plot View | Multiple sync'd plots, data overlays, selectable variables |
+
+---
+
+### Phase 5: Multi-Camera & Live Capture (Weeks 22–27)
+
+> **Goal**: Full multi-camera 3D motion capture and live operation.
+
+| Week | Feature | Notes |
+|------|---------|-------|
+| 22 | `CameraRig` model | Named camera collection, IDs, roles |
+| 22 | `StereoCalibration` | Two-camera R, T, E, F matrices via `StereoCalibrate` |
+| 23 | `MultiViewCalibration` | N > 2 cameras; bundle adjustment via Ceres-style iteration |
+| 23 | `Triangulator` | Optimal triangulation (HZ algorithm) for 2D → 3D |
+| 24 | `EpipolarGeometry` UI | Show epipolar lines live across views to validate calibration |
+| 24 | `CameraRigView` | Visual map of camera positions and orientations in UI |
+| 25 | `ICaptureSource` + `VideoCaptureSource` | Live USB / GigE cameras via EmguCV VideoCapture |
+| 25 | `MultiCaptureSession` | Synchronized multi-camera live capture with hardware trigger or SW sync |
+| 26 | `LiveCapturePanel` UI | Camera feed thumbnails, REC button, live tracking overlay |
+| 27 | Live tracking during capture | Run HybridEngine in real-time on capture frames |
+
+**SRS Updated**: REQ-CAM-001 through REQ-CAM-012  
+**SDD Updated**: Multi-camera module, capture pipeline
+
+---
+
+### Phase 6: Simulation Export (Weeks 28–30)
+
+> **Goal**: Drop data into any standard biomechanical simulation tool.
+
+| Week | Feature | Notes |
+|------|---------|-------|
+| 28 | `C3dExporter` | Full AMTI-compatible C3D with marker trajectories, analog channels |
+| 28 | `OpenSimExporter` | `.trc` marker file + `.mot` motion file |
+| 29 | Session report generator | PDF-style summary: subject info, gait params, trajectory plots |
+| 30 | Data validation pre-export | Gap checking, unit verification, calibration status check |
+
+---
+
+### Phase 7: Video Filters & Extended Tools (Weeks 31–34)
+
+> **Goal**: Feature parity with legacy Tracker for specialist use cases.
+
+| Week | Feature | Notes |
+|------|---------|-------|
+| 31 | `IVideoFilter` pipeline | Stackable, copy/paste, enable/disable |
+| 31 | Core filters | Brightness/contrast, grayscale, negative, deinterlace |
+| 32 | Advanced filters | Strobe, ghost, baseline subtraction |
+| 33 | Line Profile + RGB Region | Brightness measurement tools |
+| 34 | Protractor + Circle Fitter | Angle and curvature measurement |
+
+---
+
+### Phase 8: Polish & Release (Weeks 35–38)
+
+> **Goal**: Production v1.0 with full CDSCO documentation package.
+
+| Week | Feature | Notes |
+|------|---------|-------|
+| 35 | Full Undo/Redo | Command pattern across all operations |
+| 35 | Preferences + Settings | Fonts, units, default engine, lens profile |
+| 36 | Project file format `.humtrk` | JSON with video reference, calibration, all tracks |
+| 36 | Legacy `.trk` import | Java Tracker migration |
+| 37 | Cross-platform installers | MSIX, DMG, AppImage |
+| 37 | CDSCO documentation package | Finalize SRS, SDD, Risk, Traceability, Test Report |
+| 38 | User documentation | In-app help, quickstart guide, calibration guide PDF |
+| 38 | **v1.0 Release** |  |
+
+---
+
+## 7. CDSCO / IEC 62304 Compliance & Living Documentation
+
+### 7.1 Key Principle: Documentation Lives With Code
+
+> [!IMPORTANT]
+> No PR is mergeable if it adds or changes a requirement-related feature without also updating the corresponding documentation files. This is enforced by CI.
+
+Every PR that touches:
+- `Calibration/` → must update `SOFTWARE_REQUIREMENTS.md` (new REQ-CAL-xxx), `TRACEABILITY_MATRIX.md`, `CALIBRATION_GUIDE.md`
+- `Tracking/` → must update `TRACEABILITY_MATRIX.md`
+- Any `ITrackingEngine` → must add a determinism golden baseline test
+- Any physics formula → must add a numerical accuracy test with documented expected tolerance
+
+### 7.2 Required Documents Per Phase
+
+| Phase | Documents Updated |
+|-------|------------------|
+| 1 | SRS (REQ-TRK), SDD (video/canvas arch), Risk (RSK-001, 003) |
+| 2 | SRS (REQ-CAL), SDD (calibration arch), Risk (RSK-002), `CALIBRATION_GUIDE.md` |
+| 3 | SRS (REQ-TRK tracking), Traceability (all tracking reqs), Bench test reports |
+| 4 | SRS (REQ-PHY, REQ-GAIT), Risk (RSK-004 gait computed incorrectly) |
+| 5 | SRS (REQ-CAM), SDD (multi-camera/capture arch), Risk (RSK-005 sync error) |
+| 6 | SRS (REQ-EXP), Traceability (export reqs), Verification results |
+| 7 | SRS (REQ-FLT) |
+| 8 | All docs finalized, archival copy in `docs/releases/v1.0.0/` |
+
+### 7.3 Risk Register (Expanded)
+
+| Risk ID | Hazard | Mitigation |
+|---------|--------|------------|
+| RSK-001 | Non-deterministic tracking | Byte-exact CI determinism tests |
+| RSK-002 | Incorrect calibration scale | RMS gate + mandatory explicit user approval |
+| RSK-003 | Frame dropping distorting timing | Frame-exact FFmpeg extraction, hardware timestamps |
+| RSK-004 | Incorrect gait parameters treated as clinical fact | Prominent "analysis tool, not diagnostic" watermark on reports |
+| RSK-005 | Multi-camera sync error causing 3D errors | HW trigger preferred; SW sync lag measured and reported |
+| RSK-006 | Lens distortion not corrected before world calibration | UI enforces order: must complete lens correction before world cal |
+
+---
+
+## 8. Code Quality Standards
+
+```xml
+<!-- Directory.Build.props — applied to all projects -->
+<PropertyGroup>
+  <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  <Nullable>enable</Nullable>
+  <ImplicitUsings>enable</ImplicitUsings>
+  <GenerateDocumentationFile>true</GenerateDocumentationFile> <!-- All public APIs documented -->
+  <AnalysisMode>All</AnalysisMode>
+</PropertyGroup>
+
+<ItemGroup>
+  <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.*" />
+  <PackageReference Include="SonarAnalyzer.CSharp" Version="9.*" />
+</ItemGroup>
+```
+
+All public members in `Core` and `Biomechanics` must have XML docstrings:
+```csharp
+/// <summary>
+/// Undistorts a 2D image point using the Brown-Conrady lens model.
+/// </summary>
+/// <param name="distortedPoint">The raw image-space point in pixels.</param>
+/// <param name="model">The lens distortion model coefficients.</param>
+/// <returns>The corrected image point.</returns>
+public static PointF Undistort(PointF distortedPoint, LensDistortionModel model) { ... }
+```
+
+---
+
+## 9. PR Documentation Standard (Final)
+
+```markdown
+## Summary
+[One precise line]
+
+## Requirement Reference
+- REQ-ID: [e.g., REQ-CAL-003]
+- SRS Section: [e.g., §3.2]
+- Issue: #[number]
+
+## Documentation Updates
+- [ ] SOFTWARE_REQUIREMENTS.md updated
+- [ ] SOFTWARE_DESIGN.md updated  
+- [ ] TRACEABILITY_MATRIX.md updated
+- [ ] CALIBRATION_GUIDE.md updated (if calibration related)
+- [ ] CHANGE_LOG.md updated
+- [ ] RISK_ANALYSIS.md updated (if new risk identified)
+
+## Testing
+- [ ] Unit tests pass (dotnet test)
+- [ ] Determinism test passes (if tracking/physics changed)
+- [ ] Calibration accuracy test passes (if calibration changed, RMS < tolerated threshold)
+- [ ] Manual verification steps: [describe]
+
+## Risk Assessment
+- [ ] No new risk
+- [ ] Risk updated: [RSK-ID + description]
+```
+
+---
+
+## 10. Timeline — 3-Developer Team (38 Weeks / ~9 Months)
+
+| Phase | Weeks | Milestone |
+|-------|-------|-----------|
+| 1 - Foundation | 1–5 | Video + manual marks + data table |
+| 2 - Calibration | 6–10 | Full lens + world calibration |
+| 3 - Tracking | 11–16 | All 6 engines, >100 FPS for 15 markers |
+| 4 - Gait/Physics | 17–21 | Joint angles, gait events, CoM |
+| 5 - Multi-Cam/Live | 22–27 | 3D reconstruction + live capture |
+| 6 - Sim Export | 28–30 | .c3d, OpenSim, session reports |
+| 7 - Filters | 31–34 | Legacy feature parity |
+| 8 - Release | 35–38 | v1.0 + CDSCO documentation |
+
+| Developer | Primary Ownership |
+|-----------|------------------|
+| Dev 1 (Lead) | Core: Calibration, tracking engines, physics, multi-camera |
+| Dev 2 | UI: Avalonia views, SkiaSharp canvas, design system |
+| Dev 3 | Data: Physics, gait, export, I/O, test suite, CDSCO docs |
