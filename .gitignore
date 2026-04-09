@@ -10,3 +10,7 @@ src/org/opensourcephysics/controls/OSPLog_template.txt
 /tmp/
 tracker.prefs
 //.classpath
+bin/
+obj/
+**/bin/
+**/obj/

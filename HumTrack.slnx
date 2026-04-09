@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HumTrack.App/HumTrack.App.csproj" />
+    <Project Path="src/HumTrack.Biomechanics/HumTrack.Biomechanics.csproj" />
+    <Project Path="src/HumTrack.Core/HumTrack.Core.csproj" />
+  </Folder>
+</Solution>
