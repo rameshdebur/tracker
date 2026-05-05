@@ -803,7 +803,7 @@ public class TableTrackView extends TrackView {
 		ArrayList<String> list = new ArrayList<String>();
 		for (Entry<String, Integer> e : htNames.entrySet()) {
 			if (bsCheckBoxes.get(e.getValue()))
-				list.add(e.getKey()); // TODO remove all subs?
+				list.add(e.getKey());
 		}
 		return list.toArray(new String[list.size()]);
 	}
