@@ -539,7 +539,7 @@ public class ExportVideoDialog extends JDialog {
 			sizeDropdown.addItem(s);
 			sizes.put(s, fullSize);
 		}
-		if (sizes.keySet().contains(selectedItem))
+		if (sizes.containsKey(selectedItem))
 			sizeDropdown.setSelectedItem(selectedItem);
 		isRefreshing = false;
 	}

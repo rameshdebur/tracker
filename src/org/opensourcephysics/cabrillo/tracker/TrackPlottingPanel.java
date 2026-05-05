@@ -1400,7 +1400,7 @@ public class TrackPlottingPanel extends PlottingPanel implements Tool {
 		double[] newYArray = new double[newXArray.length];
 		for (int k = 0; k < newXArray.length; k++) {
 			double x = newXArray[k];
-			newYArray[k] = valueMap.keySet().contains(x) ? valueMap.get(x) : Double.NaN;
+			newYArray[k] = valueMap.containsKey(x) ? valueMap.get(x) : Double.NaN;
 		}
 		dataset.clear();
 		dataset.append(newXArray, newYArray);
