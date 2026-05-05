@@ -404,9 +404,9 @@ public class ExportDataDialog extends JDialog {
 						}
 					});
 		} else {
-			if (TrackerIO.getDelimiters().keySet().contains(delimName))
+			if (TrackerIO.getDelimiters().containsKey(delimName))
 				TrackerIO.setDelimiter(TrackerIO.getDelimiters().get(delimName));
-			else if (TrackerIO.customDelimiters.keySet().contains(delimName))
+			else if (TrackerIO.customDelimiters.containsKey(delimName))
 				TrackerIO.setDelimiter(TrackerIO.customDelimiters.get(delimName));
 		}
 		refreshGUI();		

@@ -678,7 +678,7 @@ public class TrackDataBuilder extends FunctionTool {
 									ArrayList<Object> toRemove = new ArrayList<Object>();
 									for (Object child : content) {
 										XMLControl xmlControl = ((XMLProperty) child).getChildControls()[0];
-										if (!xmlControlMap.values().contains(xmlControl)) {
+										if (!xmlControlMap.containsValue(xmlControl)) {
 											toRemove.add(child);
 										} else { // check to see if functions is empty
 											ArrayList<String[]> functions = (ArrayList<String[]>) xmlControl

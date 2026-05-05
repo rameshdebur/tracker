@@ -459,7 +459,7 @@ public class ThumbnailDialog extends JDialog {
 			}
 		}
 		// select previous or default size
-		sizeDropdown.setSelectedItem(sizes.keySet().contains(selectedItem) ? selectedItem : defaultItem);
+		sizeDropdown.setSelectedItem(sizes.containsKey(selectedItem) ? selectedItem : defaultItem);
 		isRefreshing = false;
 	}
 

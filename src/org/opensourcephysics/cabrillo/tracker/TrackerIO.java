@@ -1677,7 +1677,7 @@ public class TrackerIO extends VideoIO {
 	 * @param custom the delimiter to add
 	 */
 	public static void addCustomDelimiter(String custom) {
-		if (!getDelimiters().values().contains(custom)) { // don't add a standard delimiter
+		if (!getDelimiters().containsValue(custom)) { // don't add a standard delimiter
 			// by default, use delimiter itself for key (used for display purposes--could be
 			// description)
 			customDelimiters.put(custom, custom);
