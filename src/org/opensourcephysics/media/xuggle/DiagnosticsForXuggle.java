@@ -593,19 +593,26 @@ public class DiagnosticsForXuggle extends Diagnostics {
 //		File xuggleJarDir = new File(xuggleHome); //$NON-NLS-1$
 //		File[] xuggleJars = xuggleJarDir.listFiles(TrackerStarter.xuggleFileFilter);
 //		boolean copied = false;
-//		// todo: if more than one with same (root) xuggleJarName, choose most recent
-//		for (int i = 0; i < TrackerStarter.XUGGLE_JAR_NAMES.length; i++) {
+//		String[] xuggleNames = TrackerStarter.getXuggleJarNames(OSPRuntime.getLaunchJarPath());
+//		// if more than one with same (root) xuggleJarName, choose most recent
+//		for (int i = 0; i < xuggleNames.length; i++) {
+//			File xuggleFile = null;
+//			long modified = 0;
 //			for (int j = 0; j < xuggleJars.length; j++) {
-//				File xuggleFile = xuggleJars[j];
-//				if (!xuggleFile.getName().startsWith(TrackerStarter.XUGGLE_JAR_NAMES[i]))
+//				if (!xuggleJars[j].getName().startsWith(xuggleNames[i]))
 //					continue;
+//				if (xuggleJars[j].lastModified() > modified) {
+//					xuggleFile = xuggleJars[j];
+//					modified = xuggleFile.lastModified();
+//				}
+//			}
+//			if (xuggleFile != null) {
 //				long fileLength = xuggleFile.length();
-//				File target = new File(dir, TrackerStarter.XUGGLE_JAR_NAMES[i] + ".jar");
+//				File target = new File(dir, xuggleNames[i] + ".jar");
 //				// copy jar
 //				if (!target.exists() || target.length() != fileLength) {
 //					copied = VideoIO.copyFile(xuggleFile, target) || copied;
 //				}
-//				
 //			}
 //		}
 //		return copied;
