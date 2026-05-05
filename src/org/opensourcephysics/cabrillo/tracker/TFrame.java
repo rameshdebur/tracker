@@ -612,18 +612,21 @@ public class TFrame extends OSPFrame implements PropertyChangeListener, FileImpo
 
 		if (trackerPanel.selectedViewsProperty != null) {
 			List<Object> list = trackerPanel.selectedViewsProperty.getPropertyContent();
+			String plotStr = TrackerRes.getString("TFrame.View.Plot").toLowerCase();
+			String tableStr = TrackerRes.getString("TFrame.View.Table").toLowerCase();
+			String worldStr = TrackerRes.getString("TFrame.View.World").toLowerCase();
+			String pageStr = TrackerRes.getString("TFrame.View.Text").toLowerCase();
 			for (int i = 0; i < list.size() && i < viewChoosers.length; i++) {
 				XMLProperty next = (XMLProperty) list.get(i);
 				if (next == null)
 					continue;
 				String viewName = ((String) next.getPropertyContent().get(0)).toLowerCase();
-				// hack to handle POSSIBLE name matches in pre-JS trk (won't work for translated
-				// names)
-				// Spanish here is for car.trz, specifically
-				int type = viewName.contains("diagrama") || viewName.contains("plot") ? TView.VIEW_PLOT
-						: viewName.contains("tabla") || viewName.contains("table") ? TView.VIEW_TABLE
-								: viewName.contains("mundo") || viewName.contains("world") ? TView.VIEW_WORLD
-										: viewName.contains("texto") || viewName.contains("page") ? TView.VIEW_PAGE
+				// hack to handle POSSIBLE name matches in pre-JS trk
+				// Includes default English, Spanish (for car.trz specifically), and current locale strings
+				int type = viewName.contains(plotStr) || viewName.contains("diagrama") || viewName.contains("plot") ? TView.VIEW_PLOT
+						: viewName.contains(tableStr) || viewName.contains("tabla") || viewName.contains("table") ? TView.VIEW_TABLE
+								: viewName.contains(worldStr) || viewName.contains("mundo") || viewName.contains("world") ? TView.VIEW_WORLD
+										: viewName.contains(pageStr) || viewName.contains("texto") || viewName.contains("page") ? TView.VIEW_PAGE
 												: -1;
 				// don't select default types (viewType==i)
 				if (type != i) {
