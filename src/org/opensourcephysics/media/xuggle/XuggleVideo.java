@@ -651,7 +651,6 @@ public class XuggleVideo extends MovieVideo implements SmoothPlayable, Increment
 		}
 		newPicture();
 		packet = IPacket.make();
-//		preLoadContainer();
 //		seekToStart(); // DB 2/27/22 commented out to fix AVI black images bug
 		return null;
 	}
@@ -718,42 +717,6 @@ public class XuggleVideo extends MovieVideo implements SmoothPlayable, Increment
 		return (container.seekKeyFrame(-1, Long.MIN_VALUE, 0, Long.MAX_VALUE,
 				IContainer.SEEK_FLAG_BACKWARDS) >= 0);
 	}
-
-//	private void preLoadContainer() {
-//		int n = 0;
-//		int nIncomplete = 0;
-//		while (container.readNextPacket(packet) >= 0) {
-//			if (isCurrentStream()) {
-//				long dts = packet.getTimeStamp();
-////				if (keyTS0 == Long.MIN_VALUE)
-////					keyTS0 = dts; 
-//				int offset = 0;
-//				int size = packet.getSize();
-//				while (offset < size) {
-//					// decode the packet into the picture
-//					int bytesDecoded = videoDecoder.decodeVideo(picture, packet, offset);
-//					// check for errors
-//					if (bytesDecoded < 0)
-//						break;
-//					offset += bytesDecoded;
-//				}
-////				System.out.println(n + " : dts="  + packet.getTimeStamp() + " dts="  + packet.getDts() + " "  + packet.getFormattedTimeStamp() + " " + picture.isComplete());
-//				if (picture.isComplete()) {
-//					if (keyTS1 == Long.MIN_VALUE)
-//						keyTS1 = dts; 
-//				} else {
-////					haveBFrames = true;
-//					nIncomplete++;
-//				}
-//				n++;
-//
-//			}
-//		}
-////		if (frameCount < 0)
-////			frameCount = n;
-//		if (firstDisplayPacket < 0)
-//			firstDisplayPacket = nIncomplete;
-//	}
 
 	private static String DEBUG_DIR = "c:/temp/tmp/";
 
