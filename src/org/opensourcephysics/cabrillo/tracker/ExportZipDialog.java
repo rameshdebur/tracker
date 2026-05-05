@@ -2442,19 +2442,20 @@ public class ExportZipDialog extends JDialog implements PropertyChangeListener {
 			File[] files = new File(targetDirectory).listFiles();
 			boolean added = false;
 			for (File next : files) {
-				String name = XML.stripExtension(next.getName());
-				String ext = XML.getExtension(next.getName());
+				String nextName = next.getName();
+				String name = XML.stripExtension(nextName);
+				String ext = XML.getExtension(nextName);
 				if ("html".equals(ext) || "htm".equals(ext)) { //$NON-NLS-1$ //$NON-NLS-2$
 					if (name.equals(targetName) || name.equals(targetName + "_info")) { //$NON-NLS-1$
 						// look first in added files
 						for (File file : addedFiles) {
-							added = added || file.getName().equals(next.getName());
+							added = added || file.getName().equals(nextName);
 						}
 						if (!added) {
 							// offer to add HTML to zip
 							int response = javax.swing.JOptionPane.showConfirmDialog(frame,
 									TrackerRes.getString("ZipResourceDialog.AddHTMLInfo.Message1") //$NON-NLS-1$
-											+ " \"" + next.getName() + "\"\n" //$NON-NLS-1$ //$NON-NLS-2$
+											+ " \"" + nextName + "\"\n" //$NON-NLS-1$ //$NON-NLS-2$
 											+ TrackerRes.getString("ZipResourceDialog.AddHTMLInfo.Message2"), //$NON-NLS-1$
 									TrackerRes.getString("ZipResourceDialog.AddHTMLInfo.Title"), //$NON-NLS-1$
 									javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.QUESTION_MESSAGE);
