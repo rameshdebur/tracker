@@ -1033,13 +1033,13 @@ public class Tracker {
 			// treat versions 5.2.x as 6.0.x and 5.9.xxx betas as 5.1.9
 			double d1 = Double.parseDouble(ver1.substring(0, 3));
 			if (d1 == 5.9)
-				ver1 = "5.1.9";
+				ver1 = "5.1.9" + ver1.substring(3);
 			else if (d1 >= 5.2 && d1 < 6)
 				ver1 = String.valueOf(d1 + 0.8) + ver1.substring(3);
 
 			double d2 = Double.parseDouble(ver2.substring(0, 3));
 			if (d2 == 5.9)
-				ver2 = "5.1.9";
+				ver2 = "5.1.9" + ver2.substring(3);
 			else if (d2 >= 5.2 && d2 < 6)
 				ver2 = String.valueOf(d2 + 0.8) + ver2.substring(3);
 
