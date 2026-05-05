@@ -536,7 +536,7 @@ public class TMenuBar extends TFrame.DeactivatingMenuBar implements Disposable, 
 		fileMenu.addMenuListener(this);
 		// if (!OSPRuntime.isApplet) {
 		if (testing) {
-			file_replaceTabItem = new JMenuItem("Replace Tab"); // TODO TrackerRes.getString("TMenuBar.Menu.ReplaceTab")
+			file_replaceTabItem = new JMenuItem(TrackerRes.getString("TMenuBar.Menu.ReplaceTab"));
 			file_replaceTabItem.addActionListener((e) -> {
 				frame.loadExperimentURL(null);
 			});
