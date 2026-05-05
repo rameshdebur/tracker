@@ -99,6 +99,7 @@ public class TrackerStarter {
 	static boolean launching = false;
 	static int port = 12321;
 	static Thread launchThread, exitThread;
+	static final Object launchLock = new Object();
 	static boolean abortExit;
 	static int exitCounter = 0;
 	public static int xuggleVersionIndex;
@@ -201,14 +202,19 @@ public class TrackerStarter {
 					}
 					// wait a short time for OSXServices to handle openFile event
 					// and launch Tracker with file arguments (sets launchThread to null)
-					int i = 0;
-					while(launchThread!=null && i<5) {
-						try {
-							Thread.sleep(100);
-							i++;
-						} catch (InterruptedException e) {
+					synchronized (launchLock) {
+						long timeout = 500;
+						long startTime = System.currentTimeMillis();
+						while (launchThread != null && timeout > 0) {
+							try {
+								launchLock.wait(timeout);
+							} catch (InterruptedException e) {
+								Thread.currentThread().interrupt();
+								break;
+							}
+							timeout = 500 - (System.currentTimeMillis() - startTime);
 						}
-					};
+					}
 					// launch Tracker with default args if launchThread is not null 
 					if (launchThread!=null) {
 						launchTracker(args);	
@@ -231,7 +237,10 @@ public class TrackerStarter {
 		if (launching) return;
 		launching = true;
 		logMessage("TrackerStarter running in jre: " + javaHome); //$NON-NLS-1$
-		launchThread = null;
+		synchronized (launchLock) {
+			launchThread = null;
+			launchLock.notifyAll();
+		}
 		
 		// look for new version tracker jar as first argument
 		if (args!=null && args.length>0 && (args[0].contains("tracker.jar")  //$NON-NLS-1$
