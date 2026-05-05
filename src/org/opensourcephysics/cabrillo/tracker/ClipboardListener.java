@@ -42,7 +42,7 @@ class ClipboardListener extends Thread implements ClipboardOwner {
 
 	private Clipboard sysClip = Toolkit.getDefaultToolkit().getSystemClipboard();
 	private TFrame frame;
-	private boolean running = true;
+	private volatile boolean running = true;
 	private Integer targetPanelID;
 
 	/**
@@ -66,10 +66,14 @@ class ClipboardListener extends Thread implements ClipboardOwner {
 	public void run() {
 		Transferable trans = sysClip.getContents(this);
 		takeOwnership(trans);
-		while (running) {
-			try {
-				Thread.sleep(5);
-			} catch (InterruptedException e) {
+		synchronized (this) {
+			while (running) {
+				try {
+					wait();
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					break;
+				}
 			}
 		}
 	}
@@ -155,7 +159,10 @@ class ClipboardListener extends Thread implements ClipboardOwner {
 	 * Stops this thread.
 	 */
 	public void end() {
-		running = false;
+		synchronized (this) {
+			running = false;
+			notifyAll();
+		}
 	}
 
 }
