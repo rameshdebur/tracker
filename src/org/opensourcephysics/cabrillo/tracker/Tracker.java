@@ -2296,7 +2296,7 @@ public class Tracker {
 	private static void start(String[] args) {
 		FontSizer.setLevel(preferredFontLevel + preferredFontLevelPlus);
 		Dataset.maxPointsMultiplier = 6; // increase max points in dataset
-		// idea is Tracker.jar -headless -output "xxx.zip"
+		// idea is Tracker.jar -headless -output "xxx.zip" //$NON-NLS-1$
 		// to use Xuggle to create an image video set
 		Tracker tracker = new Tracker(args, true, true, null);
 		OSPRuntime.setAppClass(tracker);
