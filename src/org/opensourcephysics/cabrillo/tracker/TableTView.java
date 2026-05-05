@@ -501,14 +501,14 @@ public class TableTView extends TrackChooserTView {
 
 			// get list of checked boxes--doesn't include independent variable
 
-			String[] checkedBoxes = tableView.getVisibleColumns();
-			if (checkedBoxes.length == 0)
+			java.util.List<String> checkedBoxes = tableView.getVisibleColumns();
+			if (checkedBoxes.isEmpty())
 				return;
 
 			// expand to include independent variable
-			String[] visibleColumns = new String[checkedBoxes.length + 1];
+			String[] visibleColumns = new String[checkedBoxes.size() + 1];
 			visibleColumns[0] = track.getDataName(0);
-			System.arraycopy(checkedBoxes, 0, visibleColumns, 1, checkedBoxes.length);
+			System.arraycopy(checkedBoxes.toArray(new String[0]), 0, visibleColumns, 1, checkedBoxes.size());
 			// create desiredOrder from track_columns array by omitting track name
 			String[] desiredOrder = new String[columns.length - 1];
 			System.arraycopy(columns, 1, desiredOrder, 0, desiredOrder.length);
