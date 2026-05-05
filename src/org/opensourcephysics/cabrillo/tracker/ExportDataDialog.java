@@ -43,6 +43,7 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.BorderFactory;
@@ -332,12 +333,12 @@ public class ExportDataDialog extends JDialog {
 						selectTrack(track, true);
 					}
 					TableTrackView tableView = (TableTrackView) tView.getTrackView(track);
-					String[] cols = tableView.getVisibleColumns();
+					List<String> cols = tableView.getVisibleColumns();
 					BitSet selectedColsBS = getSelectedColumnsBitSet(trackType);
 					selectedColsBS.clear();
 					ArrayList<String> allColumnNames = allColumnsMap.get(trackType);
-					for (int j = 0; j < cols.length; j++) {
-						String var = cols[j];
+					for (int j = 0; j < cols.size(); j++) {
+						String var = cols.get(j);
 						for (int k = 0; k < allColumnNames.size(); k++) {
 							if (allColumnNames.get(k).equals(var)) {
 								selectedColsBS.set(k);
