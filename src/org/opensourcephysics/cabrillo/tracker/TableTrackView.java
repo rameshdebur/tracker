@@ -45,6 +45,7 @@ import java.beans.PropertyChangeEvent;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
 import java.util.Enumeration;
 import java.util.EventObject;
 import java.util.HashMap;
@@ -794,18 +795,17 @@ public class TableTrackView extends TrackView {
 	}
 
 	/**
-	 * Gets an array of visible column names.
+	 * Gets a list of visible column names.
 	 *
 	 * @return the visible columns
 	 */
-	String[] getVisibleColumns() {
-		// BH TODO -- this can be returned as a list
+	List<String> getVisibleColumns() {
 		ArrayList<String> list = new ArrayList<String>();
 		for (Entry<String, Integer> e : htNames.entrySet()) {
 			if (bsCheckBoxes.get(e.getValue()))
 				list.add(e.getKey()); // TODO remove all subs?
 		}
-		return list.toArray(new String[list.size()]);
+		return list;
 	}
 
 	/**
@@ -822,7 +822,7 @@ public class TableTrackView extends TrackView {
 			modelIndexes[i] = model.getTableColumn(i).getModelIndex();
 		}
 		// get array of visible (dependent variable) column names
-		String[] dependentVars = getVisibleColumns();
+		String[] dependentVars = getVisibleColumns().toArray(new String[0]);
 		// expand array to include independent variable
 		String[] columnNames = new String[dependentVars.length + 1];
 		TTrack track = getTrack();

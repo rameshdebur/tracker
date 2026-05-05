@@ -332,12 +332,11 @@ public class ExportDataDialog extends JDialog {
 						selectTrack(track, true);
 					}
 					TableTrackView tableView = (TableTrackView) tView.getTrackView(track);
-					String[] cols = tableView.getVisibleColumns();
+						java.util.List<String> cols = tableView.getVisibleColumns();
 					BitSet selectedColsBS = getSelectedColumnsBitSet(trackType);
 					selectedColsBS.clear();
 					ArrayList<String> allColumnNames = allColumnsMap.get(trackType);
-					for (int j = 0; j < cols.length; j++) {
-						String var = cols[j];
+						for (String var : cols) {
 						for (int k = 0; k < allColumnNames.size(); k++) {
 							if (allColumnNames.get(k).equals(var)) {
 								selectedColsBS.set(k);
