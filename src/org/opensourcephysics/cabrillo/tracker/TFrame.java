@@ -617,14 +617,36 @@ public class TFrame extends OSPFrame implements PropertyChangeListener, FileImpo
 				if (next == null)
 					continue;
 				String viewName = ((String) next.getPropertyContent().get(0)).toLowerCase();
-				// hack to handle POSSIBLE name matches in pre-JS trk (won't work for translated
-				// names)
-				// Spanish here is for car.trz, specifically
 				int type = viewName.contains("diagrama") || viewName.contains("plot") ? TView.VIEW_PLOT
 						: viewName.contains("tabla") || viewName.contains("table") ? TView.VIEW_TABLE
 								: viewName.contains("mundo") || viewName.contains("world") ? TView.VIEW_WORLD
 										: viewName.contains("texto") || viewName.contains("page") ? TView.VIEW_PAGE
 												: -1;
+
+				if (type == -1) {
+					java.util.Locale[] locales = Tracker.getLocales();
+					outer: for (int locIdx = 0; locIdx < locales.length; locIdx++) {
+						java.util.Locale loc = locales[locIdx];
+						try {
+							java.util.ResourceBundle rb = java.util.ResourceBundle.getBundle("org.opensourcephysics.cabrillo.tracker.resources.tracker", loc);
+							if (rb != null) {
+								for (int j = 0; j < TView.VIEW_NAMES.length; j++) {
+									try {
+										String localizedName = rb.getString(TView.VIEW_NAMES[j]).toLowerCase();
+										if (viewName.contains(localizedName)) {
+											type = j; // TView.VIEW_PLOT is 0, VIEW_TABLE is 1, etc., which matches the array index
+											break outer;
+										}
+									} catch (java.util.MissingResourceException e) {
+										// Ignore missing resource keys
+									}
+								}
+							}
+						} catch (java.util.MissingResourceException e) {
+							// Ignore missing base bundles
+						}
+					}
+				}
 				// don't select default types (viewType==i)
 				if (type != i) {
 					if (viewChoosers[i].getSelectedViewType() != type) {
