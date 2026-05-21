@@ -2223,7 +2223,7 @@ public class TFrame extends OSPFrame implements PropertyChangeListener, FileImpo
 //      dialog.setLocation(x, y);
 //				libraryBrowser.setVisible(false);
 			} catch (Exception e) {
-				e.printStackTrace();
+				OSPLog.warning("Failed to initialize library browser: " + e.getMessage());
 			}
 		}
 		return libraryBrowser;
