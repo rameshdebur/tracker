@@ -313,7 +313,6 @@ public class XuggleVideo extends MovieVideo implements SmoothPlayable, Increment
 	public boolean loadMoreFrames(int n) throws IOException {
 		if (isFullyLoaded())
 			return false;
-		//System.out.println("Xuggle.loadMoreFrames");
 		int finalIndex = index + n;
 		long lastDTS = Long.MIN_VALUE;
 		boolean haveImages = false;
@@ -582,12 +581,10 @@ public class XuggleVideo extends MovieVideo implements SmoothPlayable, Increment
 			long elapsedTime = System.currentTimeMillis() - systemStartPlayTime;
 			double frameTime = frameStartPlayTime + getRate() * elapsedTime;
 			int frameToPlay = getFrameNumberBefore(frameTime);
-			//System.out.println("xug.contin. "+ n + "/ " + frameToPlay + " /" + endNo);
 			while (frameToPlay > -1 && frameToPlay <= n) {
 				elapsedTime = System.currentTimeMillis() - systemStartPlayTime;
 				frameTime = frameStartPlayTime + getRate() * elapsedTime;
 				frameToPlay = getFrameNumberBefore(frameTime);
-				//System.out.println("xug.contin. "+ n + "/ " + frameToPlay + " /" + endNo);
 			}
 			if (frameToPlay == -1) {
 				frameToPlay = endNo;
