@@ -192,12 +192,13 @@ public class XuggleVideo extends MovieVideo implements SmoothPlayable, Increment
 		if (rawStartTimes == null)
 			return getFrameNumberBefore(time);
 		time += TIME_SLOP_MS;
-		for (int i = 0; i < rawStartTimes.length; i++) {
+		int len = rawStartTimes.length;
+		for (int i = 0; i < len; i++) {
 			if (time < rawStartTimes[i]) {
 				return i - 1;
 			}
 		}
-		return (time < rawDuration * 1000 ? rawStartTimes.length - 1 : -1);
+		return (time < rawDuration * 1000 ? len - 1 : -1);
 	}
 
 
