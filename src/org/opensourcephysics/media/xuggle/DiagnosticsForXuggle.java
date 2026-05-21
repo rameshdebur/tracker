@@ -617,7 +617,6 @@ public class DiagnosticsForXuggle extends Diagnostics {
 	 * @param args ignored
 	 */
 	public static void main(String[] args) {
-		System.out.println(getXuggleVersion());		
 		aboutXuggle("Tracker");
 	}
 }
