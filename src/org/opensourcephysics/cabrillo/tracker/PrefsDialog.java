@@ -2002,14 +2002,17 @@ public class PrefsDialog extends JDialog {
 			}
 			// tracker jar
 			selected = 0;
-			for (int i = 0, count = versionDropdown.getItemCount(); i < count; i++) {
-				String next = versionDropdown.getItemAt(i).toString();
-				if (Tracker.preferredTrackerJar != null && Tracker.preferredTrackerJar.indexOf(next) > -1 &&
-				// distinguish tracker-5.9.2.jar from tracker-5.9.20210507
-						(Tracker.preferredTrackerJar.indexOf(".jar")
-								- Tracker.preferredTrackerJar.indexOf(next)) == next.length()) {
-					selected = i;
-					break;
+			if (Tracker.preferredTrackerJar != null) {
+				int jarIndex = Tracker.preferredTrackerJar.indexOf(".jar");
+				for (int i = 0, count = versionDropdown.getItemCount(); i < count; i++) {
+					String next = versionDropdown.getItemAt(i).toString();
+					int nextIndex = Tracker.preferredTrackerJar.indexOf(next);
+					if (nextIndex > -1 &&
+					// distinguish tracker-5.9.2.jar from tracker-5.9.20210507
+							(jarIndex - nextIndex) == next.length()) {
+						selected = i;
+						break;
+					}
 				}
 			}
 			if (versionDropdown.getItemCount() > selected) {
