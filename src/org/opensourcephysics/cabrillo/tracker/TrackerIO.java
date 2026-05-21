@@ -997,8 +997,7 @@ public class TrackerIO extends VideoIO {
 			String path = file.getAbsolutePath();
 			Map<String, ZipEntry> contents = ResourceLoader.getZipContents(path, true);
 			if (contents != null) {
-				for (String key: contents.keySet()) {
-					ZipEntry entry = contents.get(key);
+				for (ZipEntry entry : contents.values()) {
 					String name = entry.getName();
 					if (name != null && name.toLowerCase().endsWith(".trk")) {
 						name = file.getAbsolutePath() + "!/" + name;
@@ -1693,9 +1692,9 @@ public class TrackerIO extends VideoIO {
 		if (getDelimiter().equals(custom))
 			setDelimiter(defaultDelimiter);
 		String selected = null;
-		for (String key : customDelimiters.keySet()) {
-			if (customDelimiters.get(key).equals(custom))
-				selected = key;
+		for (Map.Entry<String, String> entry : customDelimiters.entrySet()) {
+			if (entry.getValue().equals(custom))
+				selected = entry.getKey();
 		}
 		if (selected != null)
 			customDelimiters.remove(selected);
@@ -2210,14 +2209,15 @@ public class TrackerIO extends VideoIO {
 			ArrayList<String> tempFiles = new ArrayList<String>();
 			String trkForTFrame = null;
 			String baseName = XML.stripExtension(name); // first guess: filename
-			for (String next : contents.keySet()) {
+			Set<String> keys = contents.keySet();
+			for (String next : keys) {
 				if (next.indexOf("_thumbnail") > -1) {
 					String thumb = XML.getName(next);
 					baseName = thumb.substring(0, thumb.indexOf("_thumbnail"));
 					break;
 				}
 			}
-			for (String next : contents.keySet()) {
+			for (String next : keys) {
 				if (next.endsWith(".trk")) { //$NON-NLS-1$
 					String s = ResourceLoader.getURIPath(path + "!/" + next); //$NON-NLS-1$
 					trkFiles.add(s);
@@ -2277,9 +2277,10 @@ public class TrackerIO extends VideoIO {
 				if (!htmlFiles.isEmpty()) {
 					// remove page view HTML files
 					String[] paths = htmlFiles.toArray(new String[htmlFiles.size()]);
+					Set<String> pageKeys = pageViewTabs.keySet();
 					for (String htmlPath : paths) {
 						boolean isPageView = false;
-						for (String page : pageViewTabs.keySet()) {
+						for (String page : pageKeys) {
 							isPageView = isPageView || htmlPath.endsWith(page);
 						}
 						if (isPageView) {
