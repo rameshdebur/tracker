@@ -1868,7 +1868,6 @@ public class TrackerIO extends VideoIO {
 		private int type = TYPE_UNK;
 		private int frameCount;
 		private String name;
-//		private String title; // BH TODO
 		private String xmlPath, xmlPath0;
 		private Runnable whenDone;
 		private Set<Integer> panelList = new HashSet<>();
@@ -1924,7 +1923,6 @@ public class TrackerIO extends VideoIO {
 			ignoreLowMemory = false;
 			xmlPath = null;
 			panelID = null;
-			// title = null;
 			panelChanged = false;
 			nonURIPath = null;
 			frameCount = 0;
@@ -2676,7 +2674,6 @@ public class TrackerIO extends VideoIO {
 		@Override
 		public void setTitle(String title) {
 			// unused
-//			this.title = title;
 		}
 
 		public TFrame getFrame() {
