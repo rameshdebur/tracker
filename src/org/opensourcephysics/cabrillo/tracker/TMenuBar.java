@@ -2074,8 +2074,9 @@ public class TMenuBar extends TFrame.DeactivatingMenuBar implements Disposable, 
 					video_filtersMenu.add(video_filter_newFilterMenu);
 					// add filter items to the newFilter menu
 					video_filter_newFilterMenu.removeAll();
-					synchronized (panel().getFilters()) {
-						for (String name : panel().getFilters().keySet()) {
+					Map<String, Class<? extends Filter>> filters = panel().getFilters();
+					synchronized (filters) {
+						for (String name : filters.keySet()) {
 							String shortName = name;
 							int i = shortName.lastIndexOf('.');
 							if (i > 0 && i < shortName.length() - 1) {
