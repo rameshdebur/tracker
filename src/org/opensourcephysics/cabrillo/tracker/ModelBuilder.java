@@ -263,7 +263,6 @@ public class ModelBuilder extends FunctionTool {
 	public void setVisible(boolean vis) {
 		if (vis == isVisible() || repaintDelayed)
 			return;
-		//System.out.println("MB setvisible " + vis);
 		repaintDelayed = true;
 		super.setVisible(vis);
 		repaintDelayed = false;
