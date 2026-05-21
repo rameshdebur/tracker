@@ -864,16 +864,34 @@ public class TrackerStarter {
 							logMessage("executable file not found: " + app); //$NON-NLS-1$
 						}
 					}
-					if (runFile != null)
-						try {
-							logMessage("executing " + runFile.getAbsolutePath()); //$NON-NLS-1$
-							ProcessBuilder pb = new ProcessBuilder(runFile.getAbsolutePath());
-							pb.directory(new File(trackerHome));
-							Process p = pb.start();
-							p.waitFor();
-						} catch (Exception ex) {
-							logMessage("execution failed: " + ex.getClass().getSimpleName() + " " + ex.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+					if (runFile != null) {
+						boolean execute = false;
+						if (java.awt.GraphicsEnvironment.isHeadless()) {
+							logMessage("headless environment: denying execution of " + runFile.getAbsolutePath()); //$NON-NLS-1$
+						} else {
+							int response = JOptionPane.showConfirmDialog(null,
+									"The preferences file requests the execution of the following file before starting Tracker:\n\n"
+											+ runFile.getAbsolutePath() + "\n\nDo you want to allow this execution?",
+									"Security Warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+							if (response == JOptionPane.YES_OPTION) {
+								execute = true;
+							} else {
+								logMessage("user denied execution of " + runFile.getAbsolutePath()); //$NON-NLS-1$
+							}
 						}
+
+						if (execute) {
+							try {
+								logMessage("executing " + runFile.getAbsolutePath()); //$NON-NLS-1$
+								ProcessBuilder pb = new ProcessBuilder(runFile.getAbsolutePath());
+								pb.directory(new File(trackerHome));
+								Process p = pb.start();
+								p.waitFor();
+							} catch (Exception ex) {
+								logMessage("execution failed: " + ex.getClass().getSimpleName() + " " + ex.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+							}
+						}
+					}
 				}
 			}
 			
