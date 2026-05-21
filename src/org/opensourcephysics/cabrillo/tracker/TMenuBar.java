@@ -1246,7 +1246,8 @@ public class TMenuBar extends TFrame.DeactivatingMenuBar implements Disposable, 
 				// send some data to the tool
 				boolean sent = false;
 				List<TView> views = frame.getTViews(panelID, TView.VIEW_PLOT, null);
-				for (int i = 0; i < views.size(); i++) {
+				int viewsSize = views.size();
+				for (int i = 0; i < viewsSize; i++) {
 					PlotTView v = (PlotTView) views.get(i);
 					PlotTrackView view = (PlotTrackView) v.getTrackView(v.getSelectedTrack());
 					if (view != null) {
@@ -1260,7 +1261,8 @@ public class TMenuBar extends TFrame.DeactivatingMenuBar implements Disposable, 
 				if (!sent) {
 					views.clear();
 					views = frame.getTViews(panelID, TView.VIEW_TABLE, views);
-					for (int i = 0; i < views.size(); i++) {
+					int viewsTableSize = views.size();
+					for (int i = 0; i < viewsTableSize; i++) {
 						TableTView v = (TableTView) views.get(i);
 							TableTrackView tableView = (TableTrackView) v.getTrackView(v.getSelectedTrack());
 							if (tableView != null) {
@@ -2699,7 +2701,8 @@ public class TMenuBar extends TFrame.DeactivatingMenuBar implements Disposable, 
 				if (p != null) {
 					p.setCursorForMarking(false, null);
 					List<TView> views = frame.getTViews(trackerPanel.getID(), TView.VIEW_PLOT, null);
-					for (int i = 0; i < views.size(); i++) {
+					int viewsPlotSize = views.size();
+					for (int i = 0; i < viewsPlotSize; i++) {
 						PlotTView v = (PlotTView) views.get(i);
 						TrackView trackView = v.getTrackView(v.getSelectedTrack());
 						PlotTrackView plotView = (PlotTrackView) trackView;
