@@ -475,7 +475,6 @@ public class TableTrackView extends TrackView {
 			refreshed = true;
 		} catch (Exception e) {
 			OSPLog.debug("TableTrackView exception " + e);
-			e.printStackTrace();
 		}
 		
 		highlightFrames(frameNumber);
@@ -752,7 +751,7 @@ public class TableTrackView extends TrackView {
 		} catch (Exception e) {
 			// occasionally throws exception during loading or playing?
 			// during playing because the highlighted rows can be set to far
-			e.printStackTrace();
+			OSPLog.debug("TableTrackView highlightRowForFrame exception " + e);
 		}
 		int cols = dataTable.getColumnCount();
 		dataTable.setColumnSelectionInterval(0, cols - 1);
@@ -786,7 +785,7 @@ public class TableTrackView extends TrackView {
 		} catch (Exception e) {
 			// occasionally throws exception during loading or playing?
 			// during playing because the highlighted rows can be set to far
-			e.printStackTrace();
+			OSPLog.debug("TableTrackView highlightColumnForFrame exception " + e);
 		}
 		int rows = dataTable.getRowCount();
 		dataTable.setRowSelectionInterval(0, rows - 1);
