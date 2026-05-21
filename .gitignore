@@ -10,3 +10,6 @@ src/org/opensourcephysics/controls/OSPLog_template.txt
 /tmp/
 tracker.prefs
 //.classpath
+run_tests.sh
+run_all_tests.sh
+*.class
