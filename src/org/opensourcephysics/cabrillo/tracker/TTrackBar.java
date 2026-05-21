@@ -136,40 +136,7 @@ public class TTrackBar extends JToolBar implements Disposable, PropertyChangeLis
 								@Override
 								public void actionPerformed(ActionEvent e) {
 									// test action goes here	
-																				
-//									TrackerPanel trackerPanel = frame.getSelectedPanel();
-//									VideoClip clip = trackerPanel.getPlayer().getVideoClip();
-//									String path = clip.getVideoPath();
-//									path = XML.forwardSlash(path);
-//									path = ResourceLoader.getNonURIPath(path);
-//									
-//									if (!"".equals(path)) {
-//										path = XML.stripExtension(path) + ".zip";
-//										String src = trackerPanel.openedFromPath;
-//										
-//										// assemble command 
-//										final ArrayList<String> cmd = new ArrayList<String>();
-//										cmd.add("C:/Program Files/Java/jre1.8.0_321/bin/java");
-//										cmd.add("-Djava.awt.headless=true");
-//										cmd.add("-jar");
-//										cmd.add("C:/Program Files/Tracker/tracker.jar");
-//										cmd.add("-headless");
-//										cmd.add(src);
-//										cmd.add("-exportVideo");
-//										cmd.add(path);
-//										
-//										ProcessBuilder builder = new ProcessBuilder(cmd);
-//										try {
-//											Process process = builder.start();
-//											int n = process.waitFor();
-//											System.out.println("pig done "+n);
-//										} catch (Exception e1) {
-//											e1.printStackTrace();
-//										}
-//									    
-//									}
 									
-											
 									if (!testTimer.isRepeats()) {
 										testTimer.stop();
 										testTimer = null;
