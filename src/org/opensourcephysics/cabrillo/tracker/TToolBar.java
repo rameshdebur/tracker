@@ -1943,8 +1943,6 @@ public class TToolBar extends JToolBar implements Disposable, PropertyChangeList
 	 */
 	@Override
 	public void dispose() {
-		//System.out.println("TToolBar.dispose " + panelID);
-		
 		disposed = true;
 		if (refreshTimer != null)
 			refreshTimer.stop();
